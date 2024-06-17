@@ -1,0 +1,21 @@
+workspace = { members = ["ai_function_proc_macro"] }
+
+[package]
+name = "acadia"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+ai_function_proc_macro = { path = "./ai_function_proc_macro" }
+async-trait = "0.1.80"
+crossterm = "0.27.0"
+dialoguer = "0.11.0"
+dotenv = "0.15.0"
+reqwest = { version = "0.12.4", features = ["json"] }
+serde = { version = "1.0.202", features = ["derive"] }
+serde_json = "1.0.117"
+strum = "0.26.2"
+strum_macros = "0.26.4"
+tokio = { version = "1.37.0", features = ["full"] }
