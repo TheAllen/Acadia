@@ -1,22 +1,31 @@
+use serde::{Deserialize, Serialize};
+
 #[derive(Debug)]
 pub struct ProjectSpec {
     pub project_description: Option<String>,
     pub backend_code: Option<String>,
-    pub frontend_code: Option<String>
+    pub frontend_code: Option<String>,
+    pub project_scope: Option<ProjectScope>,
+    pub external_urls: Option<Vec<String>>
 }
 
 impl ProjectSpec {
-    pub fn new(
-        project_description: Option<String>,
-        backend_code: Option<String>,
-        frontend_code: Option<String>
-    ) -> Self {
+    pub fn new() -> Self {
         ProjectSpec {
-            project_description,
-            backend_code,
-            frontend_code
+            project_description: None,
+            backend_code: None,
+            frontend_code: None,
+            project_scope: None,
+            external_urls: None
         }
     }
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq)]
+pub struct ProjectScope {
+    pub is_crud_required: bool,
+    pub is_user_login: bool,
+    pub is_external_urls_required: bool
 }
 
 pub fn project_focus() -> Vec<String> {
