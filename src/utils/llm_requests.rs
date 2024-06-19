@@ -2,6 +2,7 @@
 use crossterm::style::Color;
 use dotenv::dotenv;
 use reqwest::{header::{HeaderMap, HeaderValue}, Client};
+use serde::de::DeserializeOwned;
 use std::env;
 
 use crate::{agents::base::agent_traits::AgentState, models::general::llm::{LLMModel, LLMRequestBody, LLMResponse, Message, OpenAIResponse}, utils::command_line::LogMessage};
@@ -151,6 +152,19 @@ pub async fn make_llm_request(
             panic!("Error occurred when calling LLM service: {}", e);
         }
     }
+}
+
+pub async fn make_llm_request_decoded<T: DeserializeOwned>(
+    llm_model: LLMModel,
+    ai_func: fn(&str) -> &'static str,
+    user_req: String,
+    agent_position: &str,
+    agent_state: &AgentState,
+    agent_operation: &str
+) -> T {
+    let llm_res = make_llm_request(llm_model, ai_func, user_req, agent_position, agent_state, agent_operation).await;
+    let res: T = serde_json::from_str(llm_res.as_str()).expect("Could not deserialize LLM response");
+    res
 }
 
 #[cfg(test)]

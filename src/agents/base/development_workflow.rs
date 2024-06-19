@@ -19,7 +19,7 @@ impl ProjectWorkflow {
     pub fn new(user_input: Box<Arc<UserInputs>>) -> Self {
         ProjectWorkflow {
             agents: Vec::new(),
-            project_spec: Arc::new(RwLock::new(ProjectSpec::new(None, None, None))),
+            project_spec: Arc::new(RwLock::new(ProjectSpec::new())),
             user_input
         }
     }
@@ -39,7 +39,6 @@ impl ProjectWorkflow {
                 self.user_input.clone()
             ).await;
         }
-
     }
 }
 
@@ -53,10 +52,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_initiate_workflow() {
-        // TODO - refactor
+        // Note: Start local-llm to reduce cost of making paid LLM requests
         let user_input: UserInputs = project_details();
         let input_ptr: Box<Arc<UserInputs>> = Box::new(Arc::new(user_input));
-        let mut project_spec = Arc::new(RwLock::new(ProjectSpec::new(None, None, None)));
+        let mut project_spec = Arc::new(RwLock::new(ProjectSpec::new()));
 
         let manager_agent = ManagerAgent::new();
         let architect_agent = ArchitectAgent::new();
@@ -64,6 +63,5 @@ mod tests {
         project_workflow.add_agent(Box::new(manager_agent));
         project_workflow.add_agent(Box::new(architect_agent));
         project_workflow.initiate_workflow(&mut project_spec).await;
-
     }
 }
