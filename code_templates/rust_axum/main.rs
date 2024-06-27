@@ -1,11 +1,14 @@
 use std::{net::SocketAddr, time::Duration};
 
-use axum::{extract::{Path, State}, http::StatusCode, response::IntoResponse, routing::get, Json, Router};
+use axum::{extract::{Path, Query, State}, http::StatusCode, response::IntoResponse, routing::get, Json, Router};
 use chrono::{DateTime, Utc};
 use dotenv::dotenv;
 use serde::{Deserialize, Serialize};
 use sqlx::{postgres::PgPoolOptions, types::chrono::{NaiveDate, NaiveDateTime}, PgPool};
-use bigdecimal::{BigDecimal, ToPrimitive};
+use bigdecimal::{ToPrimitive};
+
+use bigdecimal::BigDecimal as BigDecimalExternal;
+use sqlx::types::BigDecimal;
 
 
 /* Entities */ 
@@ -63,7 +66,7 @@ struct StockPrice {
     low: BigDecimal,
     close: BigDecimal,
     adjusted_close: BigDecimal,
-    volume: BigDecimal
+    volume: i32
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -76,7 +79,7 @@ struct StockPriceConvert {
     low: f64,
     close: f64,
     adjusted_close: f64,
-    volume: i64,
+    volume: i32,
 }
 
 impl StockPrice {
@@ -90,7 +93,7 @@ impl StockPrice {
             low: self.low.to_f64().unwrap_or(0.0),
             close: self.close.to_f64().unwrap_or(0.0),
             adjusted_close: self.adjusted_close.to_f64().unwrap_or(0.0),
-            volume: self.volume.to_i64().unwrap_or(0),
+            volume: self.volume,
         }
     }
 }
@@ -106,6 +109,12 @@ struct CreateStockPrice {
     close: f32,
     adjusted_close: f32,
     volume: BigDecimal
+}
+
+#[derive(Debug, Deserialize)]
+pub struct DateStr {
+    start_date: String,
+    end_date: String
 }
 
 
@@ -170,7 +179,8 @@ async fn create_stock(
 
 async fn get_stock_prices_by_stock(
     State(db_pool): State<PgPool>,
-    Path(symbol): Path<String>
+    Path(symbol): Path<String>,
+    Query(date_param): Query<DateStr>
 ) -> impl IntoResponse {
     let symbol = symbol.to_uppercase();
     let stock_id = sqlx::query_as!(
@@ -191,6 +201,8 @@ async fn get_stock_prices_by_stock(
     .fetch_all(&db_pool)
     .await
     .expect("Could not find stock id");
+    println!("{:?} {:?}", date_param.start_date, date_param.end_date);
+    (StatusCode::OK, Json(stock_price_rows))
 }
 
 
@@ -219,6 +231,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             .route("/hello", get(hello_route))
             .route("/stocks", get(get_stocks).post(create_stock))
             .route("/stocks/:symbol", get(get_stock))
+            .route("/prices/:symbol", get(get_stock_prices_by_stock))
     ).with_state(db_pool);
 
     axum::serve(listener, app).await.expect("Error serving server");

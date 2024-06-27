@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use crossterm::style::Color;
 use tokio::sync::RwLock;
 
-use crate::{agents::base::{agent_attributes::AgentAttributes, agent_traits::AsyncExecuteFunctions}, ai_functions::ai_functions::print_backend_webserver_code, function_string, models::general::{llm::LLMModel, project::{ProjectSpec, UserInputs}}, utils::{command_line::LogMessage, llm_requests::make_llm_request}};
+use crate::{agents::base::{agent_attributes::AgentAttributes, agent_traits::AsyncExecuteFunctions}, ai_functions::ai_functions::print_backend_webserver_code, function_string, models::general::{llm::LLMModel, project::{ProjectSpec, UserInputs}}, utils::{command_line::LogMessage, files_io::read_code_template_contents, llm_requests::make_llm_request}};
 
 
 #[derive(Debug, Clone)]
@@ -29,8 +29,15 @@ impl BackendAgent {
             LogMessage::Error.print_message("No language was selected. Exiting program", Color::Red);
             panic!();
         }
+        let code_template = read_code_template_contents(preferred_language.clone().unwrap());
+
         let project_description = project_spec.as_ref().read().await.project_description.clone().unwrap();
-        let extended_description = format!("{} built using {}", project_description, preferred_language.unwrap());
+        let extended_description = format!(
+            "CODE TEMPLATE: {} \n PROJECT DESCRIPTION: {} \n built using {}",
+            code_template, 
+            project_description, 
+            preferred_language.unwrap()
+        );
 
         if let Ok(ref mut proj_spec) = project_spec.try_write() {
             let backend_code = make_llm_request(
