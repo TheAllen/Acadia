@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{process::{Command, Stdio}, sync::Arc};
 
 use async_trait::async_trait;
 use crossterm::style::Color;
@@ -9,7 +9,8 @@ use crate::{agents::base::{agent_attributes::AgentAttributes, agent_traits::{Age
 
 #[derive(Debug, Clone)]
 pub struct BackendAgent {
-    pub attributes: AgentAttributes
+    attributes: AgentAttributes,
+    bug_counts: u8
 }
 
 impl BackendAgent {
@@ -20,7 +21,8 @@ impl BackendAgent {
             "Backend Developer".to_owned()
         );
         BackendAgent {
-            attributes
+            attributes,
+            bug_counts: 0
         }
     }
 
@@ -56,6 +58,20 @@ impl BackendAgent {
             panic!("Failed to generate backend code");
         }
     }
+
+    fn build_backend_code(&self, code_path: &str, preferred_language: String) {
+        LogMessage::Info.print_message("Building backend code to ensure no errors", Color::Green);
+
+        let build_code: std::process::Output = Command::new("cargo")
+            .arg("build")
+            .current_dir(code_path)
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .output()
+            .expect("Failed to build backend code");
+        println!("{}", build_code.status);
+
+    }
 }
 
 #[async_trait]
@@ -74,7 +90,7 @@ impl AsyncExecuteFunctions for BackendAgent {
                     let preferred_language = user_input.backend_language.clone();
                     self.generate_backend_code(project_spec, preferred_language).await;
 
-                    self.attributes.update_agent_state(AgentState::Completed);
+                    self.attributes.update_agent_state(AgentState::Working);
                 },
                 AgentState::Working => {
                     
@@ -105,5 +121,11 @@ mod tests {
 
         let mut backend_agent = BackendAgent::new();
         backend_agent.generate_backend_code(&mut project_spec, Some("Rust".to_string())).await;
+    }
+
+    #[test]
+    fn test_build_backend_code() {
+        let backend_agent = BackendAgent::new();
+        backend_agent.build_backend_code("/Users/allenli/Projects/full_applications/Acadia/acadia/generated_code", "".to_string());
     }
 }
