@@ -46,7 +46,7 @@ impl ProjectWorkflow {
 mod tests {
     use std::{sync::Arc, time::Duration};
     use tokio::{sync::RwLock, time::sleep};
-    use crate::{agents::{architect_agent::architect_agent::ArchitectAgent, base::{agent_attributes::AgentAttributes, agent_traits::AgentState}, manager_agent::manager_agent::ManagerAgent}, models::general::project::ProjectSpec, utils::command_line::project_details};
+    use crate::{agents::{architect_agent::architect_agent::ArchitectAgent, backend_agent::{self, backend_agent::BackendAgent}, base::{agent_attributes::AgentAttributes, agent_traits::AgentState}, manager_agent::manager_agent::ManagerAgent}, models::general::project::ProjectSpec, utils::command_line::project_details};
 
     use super::*;
 
@@ -59,9 +59,11 @@ mod tests {
 
         let manager_agent = ManagerAgent::new();
         let architect_agent = ArchitectAgent::new();
+        let backend_agent = BackendAgent::new();
         let mut project_workflow = ProjectWorkflow::new(input_ptr.clone());
         project_workflow.add_agent(Box::new(manager_agent));
         project_workflow.add_agent(Box::new(architect_agent));
+        project_workflow.add_agent(Box::new(backend_agent));
         project_workflow.initiate_workflow(&mut project_spec).await;
     }
 }
